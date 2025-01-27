@@ -13,33 +13,31 @@ function formatPrivateKey(privateKey: string): string {
   console.log('=== Private Key Formatting Debug ===');
   console.log('1. Original key length:', privateKey?.length);
   console.log('2. Original key first 50 chars:', privateKey?.substring(0, 50));
-  console.log('3. Contains BEGIN header:', privateKey?.includes('BEGIN RSA PRIVATE KEY'));
-  console.log('4. Contains END footer:', privateKey?.includes('END RSA PRIVATE KEY'));
-  console.log('5. Current newlines count:', (privateKey?.match(/\n/g) || []).length);
 
-  // Remove any existing newlines and spaces
-  const cleanKey = privateKey.replace(/[\n\r\s]/g, '');
-  console.log('6. Cleaned key length:', cleanKey.length);
-  console.log('7. Cleaned key first 50 chars:', cleanKey.substring(0, 50));
-
-  // Add proper newlines after header, before footer, and every 64 characters
-  const header = '-----BEGIN RSA PRIVATE KEY-----\n';
-  const footer = '\n-----END RSA PRIVATE KEY-----';
-
-  const body = cleanKey
+  // First, clean up the key by removing all whitespace and existing headers/footers
+  let cleanKey = privateKey
     .replace('-----BEGIN RSA PRIVATE KEY-----', '')
     .replace('-----END RSA PRIVATE KEY-----', '')
-    .match(/.{1,64}/g)
-    ?.join('\n');
+    .replace(/[\n\r\s]/g, '');
 
-  console.log('8. Processed body first 64 chars:', body?.substring(0, 64));
-  console.log('9. Body chunks count:', body?.split('\n').length);
+  console.log('3. Cleaned key length:', cleanKey.length);
+  console.log('4. Cleaned key first 50 chars:', cleanKey.substring(0, 50));
 
-  const formattedKey = `${header}${body}${footer}`;
-  console.log('10. Final key length:', formattedKey.length);
-  console.log('11. Final key structure:');
-  console.log(formattedKey.split('\n').map((line, i) => `Line ${i + 1}: ${line.substring(0, 20)}...`));
-  console.log('12. Final newlines count:', (formattedKey.match(/\n/g) || []).length);
+  // Split the key into 64-character chunks
+  const chunks = cleanKey.match(/.{1,64}/g) || [];
+  console.log('5. Number of 64-char chunks:', chunks.length);
+
+  // Reassemble the key with proper formatting
+  const formattedKey = [
+    '-----BEGIN RSA PRIVATE KEY-----',
+    ...chunks,
+    '-----END RSA PRIVATE KEY-----'
+  ].join('\n');
+
+  console.log('6. Final key structure:');
+  formattedKey.split('\n').forEach((line, i) => {
+    console.log(`Line ${i + 1}: ${line.substring(0, 10)}...`);
+  });
 
   return formattedKey;
 }
@@ -57,30 +55,29 @@ async function getJWTToken() {
     throw new Error("Private key not configured");
   }
 
-  const formattedKey = formatPrivateKey(PRIVATE_KEY);
-
-  const payload = {
-    iss: INTEGRATION_KEY,
-    sub: USER_ID,
-    aud: DOCUSIGN_AUTH_SERVER,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 3600,
-    scope: "signature impersonation"
-  };
-
-  console.log('\n=== JWT Signing Attempt ===');
-  console.log('Payload:', {
-    ...payload,
-    iat: new Date(payload.iat * 1000).toISOString(),
-    exp: new Date(payload.exp * 1000).toISOString()
-  });
-
   try {
-    console.log('Attempting to sign JWT...');
-    const token = jwt.sign(payload, formattedKey, {
-      algorithm: 'RS256',
-      allowInvalidAsymmetricKeyTypes: true // Adding this for additional debugging
+    const formattedKey = formatPrivateKey(PRIVATE_KEY);
+
+    const payload = {
+      iss: INTEGRATION_KEY,
+      sub: USER_ID,
+      aud: DOCUSIGN_AUTH_SERVER,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 3600,
+      scope: "signature impersonation"
+    };
+
+    console.log('\n=== JWT Signing Attempt ===');
+    console.log('Payload:', {
+      ...payload,
+      iat: new Date(payload.iat * 1000).toISOString(),
+      exp: new Date(payload.exp * 1000).toISOString()
     });
+
+    const token = jwt.sign(payload, formattedKey, {
+      algorithm: 'RS256'
+    });
+
     console.log('JWT Token successfully generated. First 50 chars:', token.substring(0, 50));
 
     console.log('\n=== Starting OAuth Token Exchange ===');
@@ -104,7 +101,6 @@ async function getJWTToken() {
       throw new Error(`OAuth error: ${response.status} ${JSON.stringify(responseData)}`);
     }
 
-    console.log('Access Token Generated Successfully');
     return responseData.access_token;
   } catch (error) {
     console.error('Error details:', {
@@ -115,6 +111,7 @@ async function getJWTToken() {
     throw error;
   }
 }
+
 export async function GET(req: NextRequest, { params }: { params: { envelopeId: string } }) {
   console.log('=== Starting GET Request ===');
   console.log('Envelope ID:', params.envelopeId);
