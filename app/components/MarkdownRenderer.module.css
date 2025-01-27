@@ -1,0 +1,131 @@
+/* MarkdownRenderer.module.css */
+.markdownBody {
+    /*font-family: "OpenDyslexic", Arial, sans-serif; !* Dyslexia-friendly font with fallback *!*/
+    line-height: 1.8; /* Comfortable line height for readability */
+    font-size: 1.6rem; /* Larger base font size */
+    color: #333; /* Dark grey for better contrast without strain */
+    background-color: #fafafa; /* Soft background to reduce glare */
+    padding: 2rem; /* Add padding for a clean layout */
+    max-width: 800px; /* Limit line width for better readability */
+    margin: 0 auto; /* Center content */
+}
+
+/* Headings */
+.markdownBody h1 {
+    font-size: 2.8rem; /* Slightly smaller for balance */
+    line-height: 3.2rem;
+    font-weight: bold;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: #222; /* Darker color for headings */
+    border-bottom: 2px solid #ddd; /* Add underline for distinction */
+    padding-bottom: 0.5rem;
+}
+
+.markdownBody h2 {
+    font-size: 2.4rem;
+    font-weight: bold;
+    margin-top: 2rem;
+    margin-bottom: 0.8rem;
+    color: #333;
+}
+
+.markdownBody h3 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-top: 1.8rem;
+    margin-bottom: 0.6rem;
+    color: #444;
+}
+
+.markdownBody h4 {
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin-top: 1.6rem;
+    margin-bottom: 0.5rem;
+    color: #555;
+}
+
+/* Paragraphs */
+.markdownBody p {
+    font-size: 1.6rem;
+    margin-top: 1rem;
+    color: #444;
+    line-height: 1.8;
+}
+
+/* Lists */
+.markdownBody ul,
+.markdownBody ol {
+    margin-left: 2rem; /* Indent for clarity */
+    margin-top: 1rem;
+}
+
+.markdownBody ul li,
+.markdownBody ol li {
+    margin-bottom: 0.8rem; /* Space between items */
+    line-height: 1.6rem;
+    color: #555;
+}
+
+/* Code blocks */
+.markdownBody pre {
+    background-color: #f5f5f5;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    font-family: "Courier New", Courier, monospace; /* Monospace for code */
+    font-size: 1.4rem;
+    color: #333;
+    margin-top: 1.5rem;
+}
+
+.markdownBody code {
+    background-color: #f0f0f0;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.3rem;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 1.4rem;
+}
+
+/* Tables */
+.markdownBody table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #ddd;
+    font-size: 1.4rem;
+}
+
+.markdownBody th,
+.markdownBody td {
+    border: 1px solid #ddd;
+    padding: 0.8rem;
+    text-align: left;
+}
+
+.markdownBody th {
+    background-color: #f7f7f7;
+    font-weight: bold;
+}
+
+/* Blockquotes */
+.markdownBody blockquote {
+    border-left: 4px solid #ddd;
+    padding-left: 1rem;
+    color: #555;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    font-style: italic;
+}
+
+/* Links */
+.markdownBody a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+.markdownBody a:hover {
+    text-decoration: underline;
+}
