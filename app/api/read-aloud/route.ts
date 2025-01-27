@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
+export const config = {
+  maxDuration: 300, // Tell Vercel to allow up to 60 seconds for processing
+};
+
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
 export async function POST(req: NextRequest) {
@@ -33,3 +37,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to generate speech audio' }, { status: 500 });
   }
 }
+
