@@ -10,8 +10,17 @@ const PRIVATE_KEY = process.env.DOCUSIGN_PRIVATE_KEY;
 const ACCOUNT_ID = process.env.DOCUSIGN_ACCOUNT_ID;
 
 function formatPrivateKey(privateKey: string): string {
+  console.log('=== Private Key Formatting Debug ===');
+  console.log('1. Original key length:', privateKey?.length);
+  console.log('2. Original key first 50 chars:', privateKey?.substring(0, 50));
+  console.log('3. Contains BEGIN header:', privateKey?.includes('BEGIN RSA PRIVATE KEY'));
+  console.log('4. Contains END footer:', privateKey?.includes('END RSA PRIVATE KEY'));
+  console.log('5. Current newlines count:', (privateKey?.match(/\n/g) || []).length);
+
   // Remove any existing newlines and spaces
   const cleanKey = privateKey.replace(/[\n\r\s]/g, '');
+  console.log('6. Cleaned key length:', cleanKey.length);
+  console.log('7. Cleaned key first 50 chars:', cleanKey.substring(0, 50));
 
   // Add proper newlines after header, before footer, and every 64 characters
   const header = '-----BEGIN RSA PRIVATE KEY-----\n';
@@ -23,14 +32,25 @@ function formatPrivateKey(privateKey: string): string {
     .match(/.{1,64}/g)
     ?.join('\n');
 
-  return `${header}${body}${footer}`;
+  console.log('8. Processed body first 64 chars:', body?.substring(0, 64));
+  console.log('9. Body chunks count:', body?.split('\n').length);
+
+  const formattedKey = `${header}${body}${footer}`;
+  console.log('10. Final key length:', formattedKey.length);
+  console.log('11. Final key structure:');
+  console.log(formattedKey.split('\n').map((line, i) => `Line ${i + 1}: ${line.substring(0, 20)}...`));
+  console.log('12. Final newlines count:', (formattedKey.match(/\n/g) || []).length);
+
+  return formattedKey;
 }
 
 async function getJWTToken() {
-  console.log('=== Starting JWT Token Generation ===');
-  console.log('Integration Key:', INTEGRATION_KEY?.substring(0, 8) + '...');
-  console.log('User ID:', USER_ID?.substring(0, 8) + '...');
-  console.log('Private Key Length:', PRIVATE_KEY?.length);
+  console.log('\n=== Starting JWT Token Generation ===');
+  console.log('Environment Variables Check:');
+  console.log('- Integration Key present:', !!INTEGRATION_KEY);
+  console.log('- User ID present:', !!USER_ID);
+  console.log('- Private Key present:', !!PRIVATE_KEY);
+  console.log('- Account ID present:', !!ACCOUNT_ID);
 
   if (!PRIVATE_KEY) {
     console.error('Private key is missing!');
@@ -38,8 +58,6 @@ async function getJWTToken() {
   }
 
   const formattedKey = formatPrivateKey(PRIVATE_KEY);
-  console.log('Formatted Key Length:', formattedKey.length);
-  console.log('Key starts with:', formattedKey.substring(0, 50) + '...');
 
   const payload = {
     iss: INTEGRATION_KEY,
@@ -50,18 +68,22 @@ async function getJWTToken() {
     scope: "signature impersonation"
   };
 
-  console.log('JWT Payload:', {
+  console.log('\n=== JWT Signing Attempt ===');
+  console.log('Payload:', {
     ...payload,
     iat: new Date(payload.iat * 1000).toISOString(),
     exp: new Date(payload.exp * 1000).toISOString()
   });
 
   try {
-    const token = jwt.sign(payload, formattedKey, { algorithm: 'RS256' });
-    console.log('JWT Token Generated:', token.substring(0, 50) + '...');
+    console.log('Attempting to sign JWT...');
+    const token = jwt.sign(payload, formattedKey, {
+      algorithm: 'RS256',
+      allowInvalidAsymmetricKeyTypes: true // Adding this for additional debugging
+    });
+    console.log('JWT Token successfully generated. First 50 chars:', token.substring(0, 50));
 
-    // Exchange JWT for access token
-    console.log('Exchanging JWT for access token...');
+    console.log('\n=== Starting OAuth Token Exchange ===');
     const response = await fetch(`https://${DOCUSIGN_AUTH_SERVER}/oauth/token`, {
       method: 'POST',
       headers: {
@@ -82,14 +104,17 @@ async function getJWTToken() {
       throw new Error(`OAuth error: ${response.status} ${JSON.stringify(responseData)}`);
     }
 
-    console.log('Access Token Generated:', responseData.access_token.substring(0, 20) + '...');
+    console.log('Access Token Generated Successfully');
     return responseData.access_token;
   } catch (error) {
-    console.error('Error in getJWTToken:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     throw error;
   }
 }
-
 export async function GET(req: NextRequest, { params }: { params: { envelopeId: string } }) {
   console.log('=== Starting GET Request ===');
   console.log('Envelope ID:', params.envelopeId);
