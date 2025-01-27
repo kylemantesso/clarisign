@@ -9,6 +9,23 @@ const USER_ID = process.env.DOCUSIGN_USER_ID;
 const PRIVATE_KEY = process.env.DOCUSIGN_PRIVATE_KEY;
 const ACCOUNT_ID = process.env.DOCUSIGN_ACCOUNT_ID;
 
+function formatPrivateKey(privateKey: string): string {
+  // Remove any existing newlines and spaces
+  const cleanKey = privateKey.replace(/[\n\r\s]/g, '');
+
+  // Add proper newlines after header, before footer, and every 64 characters
+  const header = '-----BEGIN RSA PRIVATE KEY-----\n';
+  const footer = '\n-----END RSA PRIVATE KEY-----';
+
+  const body = cleanKey
+    .replace('-----BEGIN RSA PRIVATE KEY-----', '')
+    .replace('-----END RSA PRIVATE KEY-----', '')
+    .match(/.{1,64}/g)
+    ?.join('\n');
+
+  return `${header}${body}${footer}`;
+}
+
 async function getJWTToken() {
   console.log('=== Starting JWT Token Generation ===');
   console.log('Integration Key:', INTEGRATION_KEY?.substring(0, 8) + '...');
@@ -19,6 +36,10 @@ async function getJWTToken() {
     console.error('Private key is missing!');
     throw new Error("Private key not configured");
   }
+
+  const formattedKey = formatPrivateKey(PRIVATE_KEY);
+  console.log('Formatted Key Length:', formattedKey.length);
+  console.log('Key starts with:', formattedKey.substring(0, 50) + '...');
 
   const payload = {
     iss: INTEGRATION_KEY,
@@ -36,7 +57,7 @@ async function getJWTToken() {
   });
 
   try {
-    const token = jwt.sign(payload, PRIVATE_KEY, { algorithm: 'RS256' });
+    const token = jwt.sign(payload, formattedKey, { algorithm: 'RS256' });
     console.log('JWT Token Generated:', token.substring(0, 50) + '...');
 
     // Exchange JWT for access token
